@@ -16,5 +16,12 @@
   "bugs": {
     "url": "https://github.com/berk245/sharey-backend/issues"
   },
-  "homepage": "https://github.com/berk245/sharey-backend#readme"
+  "homepage": "https://github.com/berk245/sharey-backend#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
 }
