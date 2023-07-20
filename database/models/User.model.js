@@ -27,7 +27,7 @@ const User = db.define(
     },
     phone: {
       type: DataTypes.STRING(12),
-      allowNull: false,
+      allowNull: true,
     },
     city: {
       type: DataTypes.STRING,
@@ -35,7 +35,7 @@ const User = db.define(
     },
     address: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     member_since: {
       type: DataTypes.DATE,
