@@ -1,38 +1,30 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
 
-const ItemReview = db.define(
-  "ItemReview",
+const ItemUsage = db.define(
+  "ItemUsage",
   {
-    review_id: {
+    usage_id: {
       type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
     },
-    creator_id: {
+    user_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    reviewed_item_id: {
+    item_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    item_usage_id: {
+    item_usage_request_id: {
         type: DataTypes.BIGINT,
         allowNull: false,
       },
-    review_text: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    },
-    is_rating_positive: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
+    status:{
+        type: DataTypes.ENUM('cancelled', 'scheduled', 'active', 'completed', 'conflict'),
+        allowNull: false,
+        defaultValue: 'scheduled'
     },
     created_at: {
       type: DataTypes.DATE,
@@ -46,4 +38,4 @@ const ItemReview = db.define(
   }
 );
 
-module.exports = ItemReview;
+module.exports = ItemUsage;
