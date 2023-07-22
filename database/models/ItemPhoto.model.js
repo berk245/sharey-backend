@@ -10,6 +10,10 @@ const ItemPhoto = db.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    item_id: {
+      type: DataTypes.BIGINT,
+      allowNull: false,
+    },
     photo_url: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -17,15 +21,17 @@ const ItemPhoto = db.define(
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
-    }
+    },
+    uploaded_at: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+    },
   },
   {
     freezeTableName: true,
     timestamps: false,
   }
 );
-
-// Define associations
-Item.belongsTo(Item, { foreignKey: "item_id" }); // Item belongs to a User (owner)
 
 module.exports = ItemPhoto;

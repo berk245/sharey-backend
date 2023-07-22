@@ -11,6 +11,14 @@ const Item = db.define(
       autoIncrement: true,
       primaryKey: true,
     },
+    owner_id:{
+      type: DataTypes.BIGINT,
+      allowNull: false
+    },
+    category_id:{
+      type: DataTypes.BIGINT,
+      allowNull: false
+    },
     item_name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -45,9 +53,5 @@ const Item = db.define(
     timestamps: false,
   }
 );
-
-// Define associations
-Item.belongsTo(User, { foreignKey: "owner_id" }); // Item belongs to a User (owner)
-Item.belongsTo(Category, { foreignKey: "category_id" }); // Item belongs to a Category
 
 module.exports = Item;
