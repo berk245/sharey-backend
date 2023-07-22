@@ -32,15 +32,46 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-app.get("/item_photos/:item_id", async (req, res) => {
+app.get("/item_photos", async (req, res) => {
   const ItemPhoto = require('./database/models/ItemPhoto.model')
+
+  const {item_id} = req.query
+
   const photos = await ItemPhoto.findAll({
       where:{
-          item_id: req.params.item_id
+          item_id: item_id
       }
   })
 
   res.status(200).json({ photos: photos });
+
+});
+
+app.get("/item_reports", async (req, res) => {
+  const ItemReport = require('./database/models/ItemReport.model')
+  
+  const {item_id} = req.query
+  const reports = await ItemReport.findAll({
+      where:{
+          reported_item_id: item_id
+      }
+  })
+
+  res.status(200).json({ reports: reports });
+
+});
+
+app.get("/item_reviews", async (req, res) => {
+  const ItemReview = require('./database/models/ItemReview.model')
+  
+  const {item_id} = req.query
+  const reviews = await ItemReview.findAll({
+      where:{
+          reviewed_item_id: item_id
+      }
+  })
+
+  res.status(200).json({ reviews: reviews });
 
 });
 
