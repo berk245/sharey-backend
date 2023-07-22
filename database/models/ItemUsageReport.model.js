@@ -1,8 +1,8 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
 
-const ItemReport = db.define(
-  "ItemReport",
+const ItemUsageReport = db.define(
+  "ItemUsageReport",
   {
     report_id: {
       type: DataTypes.BIGINT,
@@ -13,7 +13,7 @@ const ItemReport = db.define(
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    reported_item_id: {
+    reported_usage_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
@@ -43,4 +43,4 @@ const ItemReport = db.define(
   }
 );
 
-module.exports = ItemReport;
+module.exports = ItemUsageReport;
