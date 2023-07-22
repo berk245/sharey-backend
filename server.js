@@ -2,9 +2,9 @@ const express = require("express");
 const app = express();
 const db = require("./database/config");
 const bcrypt = require("bcrypt");
+const associations = require("./database/models/associations");
 
 app.use(express.json());
-
 app.get("/", (req, res) => {
   res.status(200).send("Hello World!");
 });
@@ -74,6 +74,15 @@ app.get("/item_reviews", async (req, res) => {
   res.status(200).json({ reviews: reviews });
 
 });
+
+  // // Synchronize the models with the database
+  // db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
+  // .then(() => {
+  //   console.log("Database and tables synced.");
+  //   associations()
+  // })
+  // .catch((err) => console.error("Error syncing database:", err));
+  
 
 const port = process.env.PORT || 3000;
 

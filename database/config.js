@@ -1,6 +1,5 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
-
 const Sequelize = require("sequelize");
 
 const db = new Sequelize(
@@ -12,7 +11,6 @@ const db = new Sequelize(
     dialect: "mysql",
   }
 );
-
 db.authenticate()
   .then(() => {
     console.log("Connected to db successfuly");
