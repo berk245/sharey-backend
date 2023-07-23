@@ -1,8 +1,18 @@
 const express = require("express");
 const router = express.Router();
 const Item = require("../database/models/Item.model");
-
+const getMatchingItems = require('../helpers/getMatchingItems')
 module.exports = function () {
+  router.get("/", async(req, res) => {
+    try {
+      let params = req.query;
+      const items = await getMatchingItems(params)
+
+      res.status(200).json({ items: items });
+    } catch (err) {
+      console.log(err);
+    }
+  });
   router.post("/add", async (req, res) => {
     try {
       const { user_id, category_id, item_name, item_description } = req.body;
@@ -20,6 +30,7 @@ module.exports = function () {
       res.status(500).send("Server error");
     }
   });
+
   // Search and filter item
   // Update item
   // Delete Item
