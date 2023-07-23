@@ -13,6 +13,7 @@ module.exports = function () {
       res.status(200).json({ items: items });
     } catch (err) {
       console.log(err);
+      res.status(500).send("Server error");
     }
   });
   router.post("/add", async (req, res) => {

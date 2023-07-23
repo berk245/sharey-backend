@@ -72,6 +72,7 @@ const associations = () => {
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
     },
+    unique: 'Unique_Review'
   });
   //every user review is about a user
   UserReview.belongsTo(User, {
@@ -81,6 +82,7 @@ const associations = () => {
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
     },
+    unique: 'Unique_Review'
   });
   //User writes many user reports
   User.hasMany(UserReport, {

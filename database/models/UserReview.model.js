@@ -38,7 +38,7 @@ const UserReview = db.define(
   },
   {
     freezeTableName: true,
-    timestamps: false,
+    timestamps: false
   }
 );
 

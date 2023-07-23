@@ -5,6 +5,7 @@ const associations = require("./database/models/associations");
 const authRoute = require("./routes/authRoute");
 const ItemRoute = require("./routes/ItemRoute");
 const ItemUsageRequestRoute = require("./routes/ItemUsageRequestRoute");
+const UserReviewRoute = require("./routes/UserReviewRoute");
 
 app.use(express.json());
 
@@ -15,6 +16,7 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoute());
 app.use('/item', ItemRoute());
 app.use('/item_usage_request', ItemUsageRequestRoute())
+app.use('/user_review', UserReviewRoute())
 
 app.get("/item_photos", async (req, res) => {
   const ItemPhoto = require('./database/models/ItemPhoto.model')
@@ -60,7 +62,7 @@ app.get("/item_reviews", async (req, res) => {
 });
 
 
-  // // Synchronize the models with the database
+  // Synchronize the models with the database
   // db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
   // .then(() => {
   //   console.log("Database and tables synced.");

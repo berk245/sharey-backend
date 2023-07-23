@@ -30,7 +30,7 @@ const ItemUsageRequest = db.define(
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM("pending", "accepted", "declined"),
+      type: DataTypes.ENUM("pending", "accepted", "declined", "cancelled"),
       allowNull: false,
       defaultValue: "pending",
     },
