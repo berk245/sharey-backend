@@ -3,6 +3,7 @@ const app = express();
 const db = require("./database/config");
 const associations = require("./database/models/associations");
 const authRoute = require("./routes/authRoute");
+const ItemRoute = require("./routes/ItemRoute");
 
 app.use(express.json());
 
@@ -11,6 +12,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoute());
+app.use('/item', ItemRoute());
 
 app.get("/item_photos", async (req, res) => {
   const ItemPhoto = require('./database/models/ItemPhoto.model')
