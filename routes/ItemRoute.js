@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const Item = require("../database/models/Item.model");
-const getMatchingItems = require('../helpers/getMatchingItems')
+const getMatchingItems = require("../helpers/getMatchingItems");
+const updateItem = require("../helpers/updateItem");
+
 module.exports = function () {
-  router.get("/", async(req, res) => {
+  router.get("/", async (req, res) => {
     try {
       let params = req.query;
-      const items = await getMatchingItems(params)
+      const items = await getMatchingItems(params);
 
       res.status(200).json({ items: items });
     } catch (err) {
@@ -30,21 +32,25 @@ module.exports = function () {
       res.status(500).send("Server error");
     }
   });
+  router.post("/update", async (req, res) => {
+    const result = await updateItem(req.body);
+    if (!result) res.status(500).send("Could not update");
+    else res.status(200).json({ message: `Update successful.` });
+  });
+  router.delete("/", async (req, res) => {
+    try {
+      const { item_id, user_id } = req.body;
 
-  // Search and filter item
-  // Update item
-  // Delete Item
-
-  // router.get("/item_photos/:item_id", async (req, res) => {
-  //   const photos = await ItemPhoto.findAll({
-  //       where:{
-  //           item_id: req.params.item_id
-  //       }
-  //   })
-
-  //   res.status(200).json({ words: words });
-
-  // });
-
+      await Item.destroy({
+        where: {
+          item_id: item_id,
+          owner_id: user_id,
+        },
+      });
+      res.status(200).json({ message: `Delete successful.` });
+    } catch (err) {
+      res.status(500).send("Could not delete");
+    }
+  });
   return router;
 };
