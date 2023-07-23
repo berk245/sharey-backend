@@ -2,9 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Item = require("../database/models/Item.model");
 const ItemUsageRequest = require("../database/models/ItemUsageRequest.model");
-const getMatchingItems = require("../helpers/getMatchingItems");
-const updateItem = require("../helpers/updateItem");
-
+const Sequelize = require("sequelize");
 module.exports = function () {
   router.post("/create", async (req, res) => {
     try {
@@ -34,6 +32,75 @@ module.exports = function () {
       res.status(500).send({ error: "Could bot create the usage request" });
     }
   });
+
+  router.get("/", async (req, res) => {
+    //Can get all item usage requests made by an user or made to an item
+    try {
+      let requests = await ItemUsageRequest.findAll({
+        where: {
+          ...req.query,
+        },
+      });
+      res.status(200).send({ matches: requests });
+    } catch (err) {
+      console.log(err);
+      res.status(500).send({ error: "Error getting requests" });
+    }
+  });
+
+  router.post("/respond", async (req, res) => {
+    try {
+      const { request_id, user_id, owner_response } = req.body;
+
+      let [affectedRows] = await ItemUsageRequest.update(
+        {
+          status: owner_response,
+        },
+        {
+          where: {
+            request_id: request_id,
+            is_active: 1,
+            // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
+            // to ensure only the owner of an item can accept or decline
+            [Sequelize.Op.and]: Sequelize.literal(
+              `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsageRequest.item_id) = ${user_id}`
+            ),
+          },
+        }
+      );
+      if (affectedRows)
+        res.status(200).send({ message: "Status changed succesfully" });
+      else
+        res
+          .status(404)
+          .send({ error: "No matching usage requests or no changes." });
+    } catch (err) {
+      console.log(err);
+      res.status(500).send({ error: "Error getting requests" });
+    }
+  });
+
+  router.delete("/cancel", async (req, res) => {
+    try {
+      let [affectedRows] = await ItemUsageRequest.update(
+        {
+          status: "cancelled",
+        },
+        {
+          where: req.body,
+        }
+      );
+      if (affectedRows) res.status(200).send({ message: "Request cancelled" });
+      else
+        res
+          .status(404)
+          .send({ error: "No matching usage requests or no changes." });
+    } catch (err) {
+      console.log(err);
+      res.status(500).send({ error: "Error getting requests" });
+    }
+  });
+
   //   router.post("/add", async (req, res) => {
   //     try {
   //       const { user_id, category_id, item_name, item_description } = req.body;
