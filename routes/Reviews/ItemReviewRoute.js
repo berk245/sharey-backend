@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const ItemReview = require("../database/models/ItemReview.model");
-const ItemUsage = require("../database/models/ItemUsage.model");
+const ItemReview = require("../../database/models/ItemReview.model");
+const ItemUsage = require("../../database/models/ItemUsage.model");
 
 module.exports = function () {
   router.get("/", async (req, res) => {

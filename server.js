@@ -5,10 +5,10 @@ const associations = require("./database/models/associations");
 const authRoute = require("./routes/authRoute");
 const ItemRoute = require("./routes/ItemRoute");
 const ItemUsageRequestRoute = require("./routes/ItemUsageRequestRoute");
-const UserReviewRoute = require("./routes/UserReviewRoute");
-const ItemReviewRoute = require("./routes/ItemReviewRoute");
-const UserReportRoute = require("./routes/UserReportRoute");
-const ItemReportRoute = require("./routes/ItemReportRoute");
+const UserReviewRoute = require("./routes/Reviews/UserReviewRoute");
+const ItemReviewRoute = require("./routes/Reviews/ItemReviewRoute");
+const UserReportRoute = require("./routes/Reports/UserReportRoute");
+const ItemReportRoute = require("./routes/Reports/ItemReportRoute");
 const ItemUsageReport = require("./routes/Reports/ItemUsageReport");
 
 app.use(express.json());
