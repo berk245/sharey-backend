@@ -25,11 +25,6 @@ const ItemReview = db.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    },
     is_rating_positive: {
       type: DataTypes.BOOLEAN,
       allowNull: false,

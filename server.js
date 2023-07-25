@@ -6,6 +6,8 @@ const authRoute = require("./routes/authRoute");
 const ItemRoute = require("./routes/ItemRoute");
 const ItemUsageRequestRoute = require("./routes/ItemUsageRequestRoute");
 const UserReviewRoute = require("./routes/UserReviewRoute");
+const ItemReviewRoute = require("./routes/ItemReviewRoute");
+const UserReportRoute = require("./routes/UserReportRoute");
 
 app.use(express.json());
 
@@ -17,6 +19,8 @@ app.use("/auth", authRoute());
 app.use('/item', ItemRoute());
 app.use('/item_usage_request', ItemUsageRequestRoute())
 app.use('/user_review', UserReviewRoute())
+app.use('/item_review', ItemReviewRoute())
+app.use('/user_report', UserReportRoute())
 
 app.get("/item_photos", async (req, res) => {
   const ItemPhoto = require('./database/models/ItemPhoto.model')

@@ -25,11 +25,6 @@ const UserReview = db.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,
