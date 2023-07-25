@@ -5,8 +5,6 @@ const updateItem = async (requestBody) => {
   try {
     const { item_id, user_id, ...fieldsToUpdate } = requestBody;
 
-    console.log(fieldsToUpdate);
-
     const [affectedRows] = await Item.update(fieldsToUpdate, {
       where: {
         item_id: item_id,
