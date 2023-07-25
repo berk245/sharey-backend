@@ -24,7 +24,6 @@ module.exports = function () {
       }
     }
   });
-
   router.get("/", async (req, res) => {
     try {
       const { creator_id, reported_user_id } = req.query;
@@ -32,13 +31,13 @@ module.exports = function () {
         res.status(400).send({ error: "Bad request" });
       }
 
-      let reviews = await UserReport.findAll({
+      let reports = await UserReport.findAll({
         where: {
           ...req.query,
         },
       });
 
-      res.status(200).send({ reviews: reviews });
+      res.status(200).send({ reports: reports });
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: err.name });
@@ -50,7 +49,7 @@ module.exports = function () {
           where: req.query,
         });
         if (deleteSuccess)
-          res.status(200).send({ message: "Deleted item review." });
+          res.status(200).send({ message: "Deleted user report." });
         else
           res
             .status(404)
