@@ -21,11 +21,6 @@ const ItemUsageReport = db.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-    },
     is_resolved: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
