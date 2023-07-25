@@ -4,6 +4,7 @@ const db = require("./database/config");
 const associations = require("./database/models/associations");
 const authRoute = require("./routes/authRoute");
 const ItemRoute = require("./routes/ItemRoute");
+const UserRoute = require("./routes/UserRoute");
 const ItemUsageRequestRoute = require("./routes/ItemUsageRequestRoute");
 const UserReviewRoute = require("./routes/Reviews/UserReviewRoute");
 const ItemReviewRoute = require("./routes/Reviews/ItemReviewRoute");
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoute());
 app.use('/item', ItemRoute());
+app.use('/user', UserRoute())
 app.use('/item_usage_request', ItemUsageRequestRoute())
 app.use('/user_review', UserReviewRoute())
 app.use('/item_review', ItemReviewRoute())

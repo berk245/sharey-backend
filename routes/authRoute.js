@@ -4,12 +4,6 @@ const User = require("../database/models/User.model");
 const bcrypt = require("bcrypt");
 const validateLogin = require('../helpers/validateLogin')
 module.exports = function () {
-  //   router.get("/get-all", GetAllWords);
-  //   router.get("/:wordId", GetWordData)
-  //   router.post("/add", AddWord);
-  //   router.post("/edit", EditWord);
-  //   router.delete("/delete", DeleteWord);
-
   router.post("/signup", async (req, res) => {
     try {
       const { email, password, name, last_name, city } = req.body;
