@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Sequelize = require("sequelize");
-const sequelize = new Sequelize("sqlite::memory:");
+const sequelize = require('../database/config')
 
 const ItemUsageRequest = require("../database/models/ItemUsageRequest.model");
 const ItemUsage = require("../database/models/ItemUsage.model");
@@ -44,11 +44,25 @@ module.exports = function () {
 
   router.post("/update_status", async (req, res) => {
     try {
-      const { usage_id, owner_id, status } = req.body;
+      const { usage_id, owner_id, new_status } = req.body;
+
+      if (new_status === "cancelled") {
+        const { isSuccess, ...data } = await cancelUsageTransaction(
+          req,
+          "owner"
+        );
+        if (!isSuccess) {
+          res.status(data.code).send({ error: data.message });
+          return;
+        } else {
+          res.status(data.code).send({ message: data.message });
+          return;
+        }
+      }
 
       let [affectedRows] = await ItemUsage.update(
         {
-          status: status,
+          status: new_status,
         },
         {
           where: {
@@ -74,80 +88,109 @@ module.exports = function () {
   });
 
   router.post("/cancel", async (req, res) => {
-    const { usage_id, user_id } = req.body;
-
-    const transaction = await sequelize.transaction();
-    try {
-      const usageToUpdate = await ItemUsage.findOne(
-        {
-          where: {
-            usage_id: usage_id,
-            user_id: user_id,
-          },
-        },
-        { transaction: transaction }
-      );
-
-      if (!usageToUpdate) {
-        await transaction.rollback();
-        res.status(404).send({ error: "No matching usages." });
-        return;
-      }
-
-      // Update the status
-      const [affectedRows1] = await ItemUsage.update(
-        {
-          status: "cancelled",
-        },
-        {
-          where: {
-            usage_id: usage_id,
-          },
-        },
-        {
-          transaction: transaction,
-        }
-      );
-      console.log(affectedRows1);
-      if (!affectedRows1) {
-        await transaction.rollback();
-        res.status(500).send({ error: "No changes." });
-        return;
-      }
-
-      console.log("Updated the table");
-
-      const [updateConnectedTable] = await ItemUsageRequest.update(
-        {
-          status: "cancelled",
-        },
-        {
-          where: {
-            request_id: usageToUpdate.item_usage_request_id,
-          },
-        },
-        {
-          transaction: transaction,
-        }
-      );
-
-      if (!updateConnectedTable) {
-        await transaction.rollback();
-        res
-          .status(500)
-          .send({ error: "Could not update the ItemUsageRequest." });
-        return;
-      }
-      console.log("Updated the corresponding table");
-
-      await transaction.commit();
-      res.status(200).send({ message: "Item Usage successfully cancelled" });
-      return
-    } catch (err) {
-      await transaction.rollback();
-      console.log(err);
-      res.status(500).send({ error: err });
+    const { isSuccess, ...data } = await cancelUsageTransaction(req, "user");
+    if (!isSuccess) {
+      res.status(data.code).send({ error: data.message });
+      return;
+    } else {
+      res.status(data.code).send({ message: data.message });
+      return;
     }
   });
   return router;
+};
+
+const cancelUsageTransaction = async (req, userType = "user") => {
+  const { usage_id, owner_id, user_id } = req.body;
+  const transaction = await sequelize.transaction();
+
+  try {
+    let usageToUpdate;
+    if (userType === "owner") {
+      usageToUpdate = await ItemUsage.findOne({
+        where: {
+          usage_id: usage_id,
+          [Sequelize.Op.and]: Sequelize.literal(
+            `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsage.item_id) = ${owner_id}`
+          ),
+        },
+        transaction: transaction,
+      });
+    } else {
+      usageToUpdate = await ItemUsage.findOne({
+        where: {
+          usage_id: usage_id,
+          user_id: user_id,
+        },
+        transaction: transaction,
+      });
+    }
+
+    if (!usageToUpdate) {
+      await transaction.rollback();
+      return {
+        isSuccess: false,
+        code: 404,
+        message: "No matching usages.",
+      };
+    }
+
+    // Update the status
+    const [isUpdateItemUsageSuccessful] = await ItemUsage.update(
+      {
+        status: "cancelled",
+      },
+      {
+        where: {
+          usage_id: usage_id,
+        },
+        transaction: transaction,
+      }
+    );
+    if (!isUpdateItemUsageSuccessful) {
+      await transaction.rollback();
+      return {
+        isSuccess: false,
+        code: 500,
+        message: "No changes.",
+      };
+    }
+
+    const [affectedRowsCount] = await ItemUsageRequest.update(
+      {
+        status: "cancelled",
+      },
+      {
+        where: {
+          request_id: usageToUpdate.item_usage_request_id,
+        },
+        transaction: transaction,
+      }
+    );
+
+
+    if (!affectedRowsCount) {
+      await transaction.rollback();
+      return {
+        isSuccess: false,
+        code: 500,
+        message: "Could not update the ItemUsageRequest table.",
+      };
+    }
+
+    await transaction.commit();
+    return {
+      isSuccess: true,
+      code: 200,
+      message: "Item Usage successfully cancelled.",
+    };
+  } catch (err) {
+    await transaction.rollback();
+    console.log("Here", err);
+    return {
+      isSuccess: false,
+      code: 500,
+      message: err,
+    };
+  }
 };

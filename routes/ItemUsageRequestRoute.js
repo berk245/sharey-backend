@@ -3,6 +3,9 @@ const router = express.Router();
 const Item = require("../database/models/Item.model");
 const ItemUsageRequest = require("../database/models/ItemUsageRequest.model");
 const Sequelize = require("sequelize");
+const db = require("../database/config");
+const ItemUsage = require("../database/models/ItemUsage.model");
+
 module.exports = function () {
   router.post("/create", async (req, res) => {
     try {
@@ -50,16 +53,17 @@ module.exports = function () {
 
   router.get("/to_user_items", async (req, res) => {
     try {
-       // Find all ItemUsageRequest entries where the item_id belongs to the user
-       const allRequests = await ItemUsageRequest.findAll({
+      // Find all ItemUsageRequest entries where the item_id belongs to the user
+      const allRequests = await ItemUsageRequest.findAll({
         where: {
           item_id: {
-            [Sequelize.Op.in]: Sequelize.literal('(SELECT item_id FROM Item WHERE owner_id = ?)'),
+            [Sequelize.Op.in]: Sequelize.literal(
+              "(SELECT item_id FROM Item WHERE owner_id = ?)"
+            ),
           },
         },
         replacements: [req.query.user_id],
       });
-  
 
       res.status(200).send({ matches: allRequests });
     } catch (err) {
@@ -70,30 +74,8 @@ module.exports = function () {
 
   router.post("/respond", async (req, res) => {
     try {
-      const { request_id, user_id, owner_response } = req.body;
-
-      let [affectedRows] = await ItemUsageRequest.update(
-        {
-          status: owner_response,
-        },
-        {
-          where: {
-            request_id: request_id,
-            is_active: 1,
-            // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
-            // to ensure only the owner of an item can accept or decline
-            [Sequelize.Op.and]: Sequelize.literal(
-              `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsageRequest.item_id) = ${user_id}`
-            ),
-          },
-        }
-      );
-      if (affectedRows)
-        res.status(200).send({ message: "Status changed succesfully" });
-      else
-        res
-          .status(404)
-          .send({ error: "No matching usage requests or no changes." });
+      await updateItemUsageRequest(req, res);
+      return;
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: "Error getting requests" });
@@ -121,42 +103,146 @@ module.exports = function () {
     }
   });
 
-  //   router.post("/add", async (req, res) => {
-  //     try {
-  //       const { user_id, category_id, item_name, item_description } = req.body;
-
-  //       await Item.create({
-  //         owner_id: user_id,
-  //         category_id: category_id,
-  //         item_name: item_name,
-  //         item_description: item_description,
-  //       });
-
-  //       res.status(200).json({ message: `${item_name} created successfully.` });
-  //     } catch (err) {
-  //       console.log(err);
-  //       res.status(500).send("Server error");
-  //     }
-  //   });
-  //   router.post("/update", async (req, res) => {
-  //     const result = await updateItem(req.body);
-  //     if (!result) res.status(500).send("Could not update");
-  //     else res.status(200).json({ message: `Update successful.` });
-  //   });
-  //   router.delete("/", async (req, res) => {
-  //     try {
-  //       const { item_id, user_id } = req.body;
-
-  //       await Item.destroy({
-  //         where: {
-  //           item_id: item_id,
-  //           owner_id: user_id,
-  //         },
-  //       });
-  //       res.status(200).json({ message: `Delete successful.` });
-  //     } catch (err) {
-  //       res.status(500).send("Could not delete");
-  //     }
-  //   });
   return router;
+};
+
+const acceptRequestTransaction = async (body) => {
+  const { request_id, user_id } = req.body;
+  const transaction = await sequelize.transaction();
+
+  try {
+    //Update the ItemUsageRequest
+
+    if (!affectedRowsCount) {
+      await transaction.rollback();
+      return {
+        isSuccess: false,
+        code: 500,
+        message: "Could not update the ItemUsageRequest table.",
+      };
+    }
+
+    await transaction.commit();
+    return {
+      isSuccess: true,
+      code: 200,
+      message: "Item Usage successfully cancelled.",
+    };
+  } catch (err) {
+    await transaction.rollback();
+    console.log("Here", err);
+    return {
+      isSuccess: false,
+      code: 500,
+      message: err,
+    };
+  }
+};
+
+const updateItemUsageRequest = async (req, res) => {
+  const { request_id, user_id, owner_response } = req.body;
+
+  const usageToUpdate = await getItemUsageRequest(request_id);
+
+  if (owner_response === "accepted" || owner_response === 2) {
+    const transaction = await db.transaction();
+    let isRequestUpdated = await updateQuery(req, transaction);
+
+    if (!isRequestUpdated) {
+      await transaction.rollback();
+      res.status(404).send({ error: "Nothing to update." });
+      return;
+    }
+
+    //Create a new ItemUsage
+    let isItemUsageCreated = await ItemUsage.create(
+      {
+        user_id: usageToUpdate.user_id,
+        item_id: usageToUpdate.item_id,
+        item_usage_request_id: usageToUpdate.request_id,
+      },
+      { transaction: transaction }
+    );
+
+    if (!isItemUsageCreated) {
+      await transaction.rollback();
+      res.status(404).send({ error: "Item Usage could not be created." });
+      return;
+    }
+
+    await transaction.commit();
+    res.status(200).send({ message: "Update successful." });
+    return;
+  } else if (
+    (owner_response === "cancelled" || owner_response === 4) &&
+    usageToUpdate.status === "accepted"
+  ) {
+    const transaction = await db.transaction();
+    let isUpdate = await updateQuery(req, transaction);
+
+    if (!isUpdate) {
+      await transaction.rollback();
+      res.status(404).send({ error: "Nothing to update." });
+      return;
+    }
+
+    //Cancel the ItemUsage
+    let [cancelItemUsage] = await ItemUsage.update(
+      {
+        status: "cancelled",
+      },
+      {
+        where: {
+          usage_id: usageToUpdate.usage_id,
+        },
+        transaction: transaction,
+      }
+    );
+    if (!cancelItemUsage) {
+      await transaction.rollback();
+      res.status(404).send({ error: "Nothing to update." });
+      return;
+    }
+    await transaction.commit();
+    res.status(200).send({ message: "Update successful." });
+  } else {
+    let isUpdate = await updateQuery(req);
+    if (isUpdate) {
+      res.status(200).send({ message: "Update successful." });
+      return;
+    } else {
+      res.status(404).send({ error: "Nothing to update." });
+    }
+  }
+  return;
+};
+
+const updateQuery = async (req, transaction) => {
+  const { request_id, user_id, owner_response } = req.body;
+
+  let [updateSuccess] = await ItemUsageRequest.update(
+    {
+      status: owner_response,
+    },
+    {
+      where: {
+        request_id: request_id,
+        is_active: 1,
+        // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
+        // to ensure only the owner of an item can accept or decline
+        [Sequelize.Op.and]: Sequelize.literal(
+          `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsageRequest.item_id) = ${user_id}`
+        ),
+      },
+      transaction: transaction ? transaction : null,
+    }
+  );
+
+  return updateSuccess;
+};
+
+const getItemUsageRequest = async (request_id) => {
+  let request = await ItemUsageRequest.findByPk(request_id);
+
+  return request;
 };
