@@ -16,7 +16,7 @@ module.exports = function () {
       res.status(500).send("Server error");
     }
   });
-  router.post("/add", async (req, res) => {
+  router.post("/", async (req, res) => {
     try {
       const { user_id, category_id, item_name, item_description } = req.body;
 

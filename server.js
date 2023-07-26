@@ -11,6 +11,7 @@ const ItemReviewRoute = require("./routes/Reviews/ItemReviewRoute");
 const UserReportRoute = require("./routes/Reports/UserReportRoute");
 const ItemReportRoute = require("./routes/Reports/ItemReportRoute");
 const ItemUsageReport = require("./routes/Reports/ItemUsageReport");
+const ItemPhotoRoute = require("./routes/ItemPhotoRoute");
 
 app.use(express.json());
 
@@ -27,21 +28,8 @@ app.use('/item_review', ItemReviewRoute())
 app.use('/user_report', UserReportRoute())
 app.use('/item_report', ItemReportRoute())
 app.use('/item_usage_report', ItemUsageReport())
+app.use('/item_photo', ItemPhotoRoute())
 
-app.get("/item_photos", async (req, res) => {
-  const ItemPhoto = require('./database/models/ItemPhoto.model')
-
-  const {item_id} = req.query
-
-  const photos = await ItemPhoto.findAll({
-      where:{
-          item_id: item_id
-      }
-  })
-
-  res.status(200).json({ photos: photos });
-
-});
 
 app.get("/item_reports", async (req, res) => {
   const ItemReport = require('./database/models/ItemReport.model')
