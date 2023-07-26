@@ -16,18 +16,21 @@ module.exports = function () {
     }
   });
   router.post("/", async (req, res) => {
+    // INSERT INTO ItemPhoto (item_id, photo_url, description)
+    // SELECT Item.item_id, 'https://example.com/photo1.jpg', 'Photo 1 description'
+    // FROM Item
+    // WHERE item_id = 1 AND owner_id = 11;
+
     try {
       const { user_id, item_id, photo_url, description } = req.body;
 
-      const item = await Item.findOne({
-        where: {
-          owner_id: user_id,
-          item_id: item_id,
-        },
-      });
+      const item = await Item.findByPk(item_id);
 
       if (!item) {
         res.status(404).send({ error: "Item not found." });
+        return;
+      } else if (item.owner_id != user_id) {
+        res.status(401).send({ error: "You are not the owner of the item." });
         return;
       }
 
@@ -45,20 +48,26 @@ module.exports = function () {
   });
 
   router.delete("/", async (req, res) => {
+    // DELETE FROM ItemPhoto
+    // WHERE photo_id = 5 AND item_id = 1
+    //   AND EXISTS (
+    //     SELECT 1 FROM Item
+    //     WHERE item_id = 1 AND owner_id = 1
+    //   );
+
     try {
       const { photo_id, user_id, item_id } = req.body;
 
-      const item = await Item.findOne({
-        where: {
-          owner_id: user_id,
-          item_id: item_id,
-        },
-      });
+      const item = await Item.findByPk(item_id);
 
       if (!item) {
-        res.status(404).send({ error: "Related item not found." });
+        res.status(404).send({ error: "Item not found." });
+        return;
+      } else if (item.owner_id != user_id) {
+        res.status(401).send({ error: "You are not the owner of the item." });
         return;
       }
+
       await ItemPhoto.destroy({
         where: {
           photo_id: photo_id,
