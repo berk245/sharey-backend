@@ -48,6 +48,26 @@ module.exports = function () {
     }
   });
 
+  router.get("/to_user_items", async (req, res) => {
+    try {
+       // Find all ItemUsageRequest entries where the item_id belongs to the user
+       const allRequests = await ItemUsageRequest.findAll({
+        where: {
+          item_id: {
+            [Sequelize.Op.in]: Sequelize.literal('(SELECT item_id FROM Item WHERE owner_id = ?)'),
+          },
+        },
+        replacements: [req.query.user_id],
+      });
+  
+
+      res.status(200).send({ matches: allRequests });
+    } catch (err) {
+      console.log(err);
+      res.status(500).send({ error: "Error getting requests" });
+    }
+  });
+
   router.post("/respond", async (req, res) => {
     try {
       const { request_id, user_id, owner_response } = req.body;

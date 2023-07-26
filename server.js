@@ -12,6 +12,7 @@ const UserReportRoute = require("./routes/Reports/UserReportRoute");
 const ItemReportRoute = require("./routes/Reports/ItemReportRoute");
 const ItemUsageReport = require("./routes/Reports/ItemUsageReport");
 const ItemPhotoRoute = require("./routes/ItemPhotoRoute");
+const ItemUsageRoute = require("./routes/ItemUsageRoute");
 
 app.use(express.json());
 
@@ -29,6 +30,7 @@ app.use('/user_report', UserReportRoute())
 app.use('/item_report', ItemReportRoute())
 app.use('/item_usage_report', ItemUsageReport())
 app.use('/item_photo', ItemPhotoRoute())
+app.use('/item_usage', ItemUsageRoute())
 
 
 app.get("/item_reports", async (req, res) => {
