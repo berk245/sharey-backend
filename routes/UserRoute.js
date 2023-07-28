@@ -41,9 +41,13 @@ module.exports = function () {
   router.delete("/", async (req, res) => {
     try {
       const { user_id } = req.query;
+
+      const userToDelete = await User.findByPk(user_id)
+
       const [affectedRows] = await User.update(
         {
           is_active: false,
+          email: '$deleted_account$:' + userToDelete.email
         },
         {
           where: {

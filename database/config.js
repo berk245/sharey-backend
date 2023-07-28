@@ -7,16 +7,23 @@ const db = new Sequelize(
   process.env.MYSQL_USER,
   process.env.MYSQL_PASSWORD,
   {
-    host: process.env.MYSQL_HOST,
+    host: "localhost",
     dialect: "mysql",
+    dialectOptions: {
+      socketPath: process.env.MYSQL_SOCKET_PATH
+    },
+    define: {
+      paranoid: true,
+      underscore: true
+    }
   }
 );
 db.authenticate()
   .then(() => {
     console.log("Connected to db successfuly");
   })
-  .catch((err) =>
-    console.log(err)
-  );
+  .catch((err) => {
+    console.log(err);
+  });
 
 module.exports = db;

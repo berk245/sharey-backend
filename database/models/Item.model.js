@@ -8,39 +8,43 @@ const Item = db.define(
   {
     item_id: {
       type: DataTypes.BIGINT,
-      autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
+      allowNull: false,
     },
-    owner_id:{
+    owner_id: {
       type: DataTypes.BIGINT,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: User,
+        key: "user_id",
+      },
     },
-    category_id:{
+    category_id: {
       type: DataTypes.BIGINT,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: Category,
+        key: "category_id",
+      },
     },
     item_name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
     },
     item_description: {
-      type: DataTypes.TEXT,
-      allowNull: false,
+      type: DataTypes.STRING(255),
+      allowNull: true,
     },
     created_at: {
       type: DataTypes.DATE,
-      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       allowNull: false,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
     updated_at: {
       type: DataTypes.DATE,
-      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       allowNull: false,
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 1,
+      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP'),
     },
     is_active: {
       type: DataTypes.BOOLEAN,
@@ -49,7 +53,7 @@ const Item = db.define(
     },
   },
   {
-    freezeTableName: true,
+    tableName: "Item",
     timestamps: false,
   }
 );

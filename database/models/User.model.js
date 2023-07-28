@@ -5,36 +5,41 @@ const User = db.define(
   "User",
   {
     user_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       autoIncrement: true,
       primaryKey: true,
     },
     email: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
+      unique: true
     },
     password: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(60),
       allowNull: false,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     last_name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     phone: {
-      type: DataTypes.STRING(12),
+      type: DataTypes.STRING(20),
       allowNull: true,
     },
     city: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
+    country: {
+      type: DataTypes.STRING(50),
       allowNull: false,
     },
     address: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     member_since: {
@@ -43,7 +48,7 @@ const User = db.define(
       defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
     },
     profile_photo_url: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: true,
     },
     is_active: {

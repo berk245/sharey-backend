@@ -6,16 +6,13 @@ const validateLogin = require('../helpers/validateLogin')
 module.exports = function () {
   router.post("/signup", async (req, res) => {
     try {
-      const { email, password, name, last_name, city } = req.body;
+      const { password, ...rest } = req.body;
 
       let hashedPassword = await bcrypt.hash(password, 13); //
 
       await User.create({
-        email: email,
         password: hashedPassword,
-        name: name,
-        last_name: last_name,
-        city: city,
+        ...rest
       });
 
       res.status(200).json({ signupSuccess: true });

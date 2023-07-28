@@ -35,7 +35,7 @@ app.use('/item_usage', ItemUsageRoute())
 
 app.get("/item_reports", async (req, res) => {
   const ItemReport = require('./database/models/ItemReport.model')
-  
+  xw
   const {item_id} = req.query
   const reports = await ItemReport.findAll({
       where:{

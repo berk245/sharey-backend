@@ -1,5 +1,8 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
+const User = require('./User.model')
+const Item = require('./Item.model')
+const ItemUsage = require('./ItemUsage.model')
 
 const ItemReview = db.define(
   "ItemReview",
@@ -12,14 +15,27 @@ const ItemReview = db.define(
     creator_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references:{
+        model: User,
+        key: 'user_id'
+      }
     },
     reviewed_item_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references:{
+        model: Item,
+        key: 'item_id'
+      }
     },
     item_usage_id: {
         type: DataTypes.BIGINT,
         allowNull: false,
+        unique: true,
+        references:{
+          model: ItemUsage,
+          key: 'usage_id'
+        }
       },
     review_text: {
       type: DataTypes.TEXT,

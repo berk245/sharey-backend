@@ -13,13 +13,17 @@ const ItemPhoto = db.define(
     item_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references:{
+        model: Item,
+        key: 'item_id'
+      }
     },
     photo_url: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     description: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
     uploaded_at: {

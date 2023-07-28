@@ -1,5 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
+const User = require("./User.model");
+const Item = require("./Item.model");
 
 const UserReview = db.define(
   "UserReview",
@@ -12,15 +14,25 @@ const UserReview = db.define(
     creator_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: User,
+        key: "user_id",
+      },
+      name: "FK_UserReview_CreatorUser",
     },
     reviewed_user_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references: {
+        model: User,
+        key: "user_id",
+      },
+      name: "FK_UserReview_ReviewedUser",
     },
     is_rating_positive: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-      },
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
     review_text: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -33,7 +45,11 @@ const UserReview = db.define(
   },
   {
     freezeTableName: true,
-    timestamps: false
+    timestamps: false,
+    indexes: [{
+      unique: true,
+      fields: ["creator_id", "reviewed_user_id"],
+    },]
   }
 );
 

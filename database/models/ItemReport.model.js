@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
-
+const User = require("./User.model"); // Import User model
+const Item = require("./Item.model"); // Import User model
 const ItemReport = db.define(
   "ItemReport",
   {
@@ -12,10 +13,18 @@ const ItemReport = db.define(
     creator_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references:{
+        model: User,
+        key: 'user_id',
+      }
     },
     reported_item_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
+      references:{
+        model: Item,
+        key: 'item_id',
+      }
     },
     report_text: {
       type: DataTypes.TEXT,
