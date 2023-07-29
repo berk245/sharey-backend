@@ -42,14 +42,20 @@ module.exports = function () {
     try {
       const { item_id, user_id } = req.body;
 
-      await Item.destroy({
+     const isDeleteSuccess = await Item.destroy({
         where: {
           item_id: item_id,
           owner_id: user_id,
         },
       });
+
+      if(!isDeleteSuccess){
+        res.status(404).json({ error: `Could not find the item-owner pair.` });
+        return
+      }
       res.status(200).json({ message: `Delete successful.` });
     } catch (err) {
+      console.log(err);
       res.status(500).send("Could not delete");
     }
   });

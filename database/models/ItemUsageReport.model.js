@@ -26,7 +26,8 @@ const ItemUsageReport = db.define(
       references:{
         model: ItemUsage,
         key: 'usage_id'
-      }
+      },
+      field: "reported_usage_id" // Explicitly set the column name
     },
     report_text: {
       type: DataTypes.TEXT,

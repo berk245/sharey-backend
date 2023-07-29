@@ -35,6 +35,7 @@ const ItemUsage = db.define(
         model: ItemUsageRequest,
         key: "request_id",
       },
+      field: "item_usage_request_id", // Explicitly set the column name
     },
     status: {
       type: DataTypes.ENUM(

@@ -8,7 +8,8 @@ module.exports = function () {
     try {
       const { creator_id, reviewed_item_id } = req.query;
       if (!creator_id && !reviewed_item_id) {
-        res.status(400).send({ error: "Bad request" });
+        res.status(400).send({ error: 'Bad request' });
+        return
       }
 
       let reviews = await ItemReview.findAll({
@@ -18,14 +19,15 @@ module.exports = function () {
       });
 
       res.status(200).send({ reviews: reviews });
+      return
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: err.name });
+      return
     }
   });
 
   router.post("/", async (req, res) => {
-
     // INSERT INTO ItemReview (creator_id, reviewed_item_id, item_usage_id, review_text, is_rating_positive)
     // SELECT iu.user_id AS creator_id, iu.item_id, iu.usage_id AS item_usage_id, 'Good stuff' AS review_text, {is_rating_positive} AS is_rating_positive
     // FROM ItemUsage iu
@@ -43,7 +45,7 @@ module.exports = function () {
       });
 
       if (!itemUsage) {
-        res.status(404).json({
+        res.status(404).send({
           error:
             "ItemUsage not found for the given creator_id and item_usage_id",
         });
@@ -59,14 +61,17 @@ module.exports = function () {
         is_rating_positive: is_rating_positive,
       });
 
-      res.status(200).json({ message: "Item review succesfully added." });
+      res.status(200).send({ message: "Item review succesfully added." });
+      return;
     } catch (err) {
       if (err.name === "SequelizeUniqueConstraintError") {
         res
           .status(500)
           .send({ error: "You can only leave one review for the same item." });
+        return;
       } else {
-        res.status(500).json({ error: `${err.name}` });
+        res.status(500).send({ error: `${err.name}` });
+        return;
       }
     }
   });

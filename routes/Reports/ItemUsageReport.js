@@ -50,7 +50,7 @@ module.exports = function () {
       if (err.name === "SequelizeUniqueConstraintError") {
         res.status(500).send({ error: "You can report a usage only once." });
       } else {
-        res.status(500).json({ error: `${err.name}` });
+        res.status(500).json({ error: err });
       }
     }
   });

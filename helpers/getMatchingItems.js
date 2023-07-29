@@ -26,7 +26,7 @@ const getMatchingItems = async (
           include: [
             {
               model: City,
-              attributes: ["city_name"],
+              attributes: ["city_name", 'city_id'],
               required: true,
               where: {
                 city_name: city_name ? city_name : {[Op.ne]: null},
@@ -34,7 +34,7 @@ const getMatchingItems = async (
               include: [
                 {
                   model: Country,
-                  attributes: ["country_name"],
+                  attributes: ["country_name", 'country_id'],
                   where: {
                     country_name: country_name ? country_name : {[Op.ne]: null},
                   },

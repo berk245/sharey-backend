@@ -202,7 +202,7 @@ const associations = async() => {
   //item usage report is about an item usage
   ItemUsageReport.belongsTo(ItemUsage, {
     foreignKey: {
-      name: "item_usage_id",
+      name: "reported_usage_id",
       allowNull: false,
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",

@@ -1,21 +1,46 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../database/models/User.model");
+const Country = require("../database/models/Country.model");
+const City = require("../database/models/City.model");
+const { Op } = require("sequelize");
+
 module.exports = function () {
   router.get("/", async (req, res) => {
     try {
+      const { country_name, city_name, ...otherParams } = req.query;
+
       const users = await User.findAll({
         where: {
-            ...req.query,
-            is_active: true
+          ...otherParams,
+          is_active: true,
         },
+        include: [
+          {
+            model: City,
+            attributes: ["city_name"],
+            required: true,
+            where: {
+              city_name: city_name ? city_name : { [Op.ne]: null },
+            },
+            include: [
+              {
+                model: Country,
+                attributes: ["country_name"],
+                where: {
+                  country_name: country_name ? country_name : { [Op.ne]: null },
+                },
+              },
+            ],
+          },
+        ],
         attributes: { exclude: ["password"] },
       });
 
       res.status(200).json({ users: users });
     } catch (err) {
       console.log(err);
-      res.status(500).send("Server error");
+      res.status(500).send({ error: err });
     }
   });
 
@@ -34,7 +59,7 @@ module.exports = function () {
       }
     } catch (err) {
       console.log(err);
-      res.status(500).send({ error: err.parent.sqlMessage });
+      res.status(500).send({ error: err });
     }
   });
 
@@ -42,16 +67,16 @@ module.exports = function () {
     try {
       const { user_id } = req.query;
 
-      const userToDelete = await User.findByPk(user_id)
+      const userToDelete = await User.findByPk(user_id);
 
-      if(!userToDelete){
-        res.status(404).send({error: 'No matching user'})
+      if (!userToDelete) {
+        res.status(404).send({ error: "No matching user" });
       }
 
       const [affectedRows] = await User.update(
         {
           is_active: false,
-          email: '$deleted_account$:' + userToDelete.email
+          email: "$deleted_account$:" + userToDelete.email,
         },
         {
           where: {

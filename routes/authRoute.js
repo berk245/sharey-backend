@@ -17,8 +17,7 @@ module.exports = function () {
 
       res.status(200).json({ signupSuccess: true });
     } catch (err) {
-      console.log(err);
-      res.status(500).send("Server error");
+      res.status(500).send({error: err});
     }
   });
 
