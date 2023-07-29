@@ -44,6 +44,10 @@ module.exports = function () {
 
       const userToDelete = await User.findByPk(user_id)
 
+      if(!userToDelete){
+        res.status(404).send({error: 'No matching user'})
+      }
+
       const [affectedRows] = await User.update(
         {
           is_active: false,

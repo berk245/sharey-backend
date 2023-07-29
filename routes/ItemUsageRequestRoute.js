@@ -227,7 +227,6 @@ const updateQuery = async (req, transaction) => {
     {
       where: {
         request_id: request_id,
-        is_active: 1,
         // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
         // to ensure only the owner of an item can accept or decline
         [Sequelize.Op.and]: Sequelize.literal(

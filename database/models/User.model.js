@@ -1,5 +1,6 @@
 const { Sequelize, DataTypes } = require("sequelize");
 const db = require("../config");
+const City = require("./City.model");
 
 const User = db.define(
   "User",
@@ -30,13 +31,13 @@ const User = db.define(
       type: DataTypes.STRING(20),
       allowNull: true,
     },
-    city: {
-      type: DataTypes.STRING(50),
+    city_id:{
+      type: DataTypes.INTEGER,
       allowNull: false,
-    },
-    country: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
+      references:{
+        model: City,
+        key: 'city_id'
+      }
     },
     address: {
       type: DataTypes.STRING(100),
@@ -64,3 +65,5 @@ const User = db.define(
 );
 
 module.exports = User;
+
+
