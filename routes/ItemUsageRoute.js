@@ -8,11 +8,10 @@ const ItemUsage = require("../database/models/ItemUsage.model");
 
 module.exports = function () {
   router.get("/", async (req, res) => {
+
     try {
       let requests = await ItemUsage.findAll({
-        where: {
-          ...req.query,
-        },
+        where: req.query
       });
       res.status(200).send({ matches: requests });
     } catch (err) {

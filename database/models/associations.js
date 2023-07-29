@@ -12,8 +12,18 @@ const ItemUsageRequest = require("./ItemUsageRequest.model");
 const User = require("./User.model");
 const UserReport = require("./UserReport.model");
 const UserReview = require("./UserReview.model");
+const City = require("./City.model");
+const Country = require("./Country.model");
 
-const associations = () => {
+const associations = async() => {
+  City.belongsTo(Country, {
+    foreignKey:{
+      name: 'country_id',
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    }
+  })
   Item.belongsTo(Category, {
     foreignKey: {
       name: "category_id",
@@ -54,6 +64,24 @@ const associations = () => {
       onUpdate: "RESTRICT",
     },
   });
+
+  Item.belongsTo(User, {
+    foreignKey: {
+      name: "owner_id",
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    },
+  });
+
+  User.belongsTo(City,{
+    foreignKey:{
+      name: 'city_id',
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    }
+  })
 
   //User owns many items
   User.hasMany(Item, {

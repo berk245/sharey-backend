@@ -70,6 +70,7 @@ app.get("/item_reviews", async (req, res) => {
   // })
   // .catch((err) => console.error("Error syncing database:", err));
   
+  associations()
 
 const port = process.env.PORT || 3000;
 
