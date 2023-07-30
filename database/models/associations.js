@@ -65,6 +65,15 @@ const associations = async () => {
     },
   });
 
+  ItemUsage.belongsTo(Item, {
+    foreignKey: {
+      name: "item_id",
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    },
+  })
+
   Item.belongsTo(User, {
     foreignKey: {
       name: "owner_id",

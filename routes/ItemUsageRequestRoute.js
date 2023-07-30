@@ -146,39 +146,6 @@ module.exports = function () {
   return router;
 };
 
-const acceptRequestTransaction = async (body) => {
-  const { request_id, user_id } = req.body;
-  const transaction = await sequelize.transaction();
-
-  try {
-    //Update the ItemUsageRequest
-
-    if (!affectedRowsCount) {
-      await transaction.rollback();
-      return {
-        isSuccess: false,
-        code: 500,
-        message: "Could not update the ItemUsageRequest table.",
-      };
-    }
-
-    await transaction.commit();
-    return {
-      isSuccess: true,
-      code: 200,
-      message: "Item Usage successfully cancelled.",
-    };
-  } catch (err) {
-    await transaction.rollback();
-    console.log("Here", err);
-    return {
-      isSuccess: false,
-      code: 500,
-      message: err,
-    };
-  }
-};
-
 const updateItemUsageRequest = async (req, res) => {
   const { request_id, user_id, owner_response } = req.body;
 
@@ -282,6 +249,5 @@ const updateQuery = async (req, transaction) => {
 
 const getItemUsageRequest = async (request_id) => {
   let request = await ItemUsageRequest.findByPk(request_id);
-
   return request;
 };
