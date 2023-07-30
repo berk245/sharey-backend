@@ -32,11 +32,7 @@ const ItemUsageRequest = db.define(
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    date_from: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    date_to: {
+    date_to_use: {
       type: DataTypes.DATE,
       allowNull: false,
     },

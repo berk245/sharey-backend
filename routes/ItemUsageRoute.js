@@ -47,17 +47,16 @@ module.exports = function () {
       const { usage_id, owner_id, new_status } = req.body;
 
       if (new_status === "cancelled") {
-        const { isSuccess, ...data } = await cancelUsageTransaction(
-          req,
-          "owner"
-        );
-        if (!isSuccess) {
-          res.status(data.code).send({ error: data.message });
-          return;
-        } else {
-          res.status(data.code).send({ message: data.message });
-          return;
-        }
+        res.status(400).send({ error: "Please use the cancel endpoint." });
+        return;
+      }
+
+      //Check if the owner_id matches the item
+      let usageToUpdate = await ItemUsage.findByPk(usage_id);
+
+      if (!isOwner(usageToUpdate, req)) {
+        res.status(403).send({ error: "Not authorized to make this change" });
+        return;
       }
 
       let [affectedRows] = await ItemUsage.update(
@@ -67,11 +66,6 @@ module.exports = function () {
         {
           where: {
             usage_id: usage_id,
-            // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
-            // to ensure only the owner of an item can accept or decline
-            [Sequelize.Op.and]: Sequelize.literal(
-              `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsage.item_id) = ${owner_id}`
-            ),
           },
         }
       );
@@ -90,29 +84,37 @@ module.exports = function () {
   router.post("/cancel", async (req, res) => {
     const transaction = await db.transaction();
     try {
-      let usageToUpdate = getUsageToUpdate(req)
+      const { user_id, owner_id, usage_id } = req.body;
+
+      if (user_id && owner_id) {
+        res.status(422).send({ error: "Only user_id or owner_id" });
+        return;
+      }
+      let usageToUpdate = await ItemUsage.findByPk(usage_id);
       if (!usageToUpdate) {
         res.status(404).send({ error: "Usage was not found" });
         return;
       }
+      if (usageToUpdate.status === "cancelled") {
+        res.status(400).send({ error: "Usage is already cancelled" });
+        return;
+      }
+      if (!isUserAuthorized(usageToUpdate, req)) {
+        res.status(403).send({ error: "Not authorized to make this change" });
+        return;
+      }
 
       //Transaction begins
-      //Update the usage
-      let updateUsageSuccess = await usageToUpdate.update(
-        {
-          status: "cancelled",
-        },
-        { transaction: transaction }
-      );
-
-      if (!updateUsageSuccess) {
+      try {
+        usageToUpdate.status = "cancelled";
+        await usageToUpdate.save({ transaction });
+      } catch (err) {
         await transaction.rollback();
         res.status(404).send({ error: "Could not update item usage status" });
         return;
       }
 
       //Find an update the item usage request
-
       const itemUsageRequestCancel = await ItemUsageRequest.update(
         { status: "cancelled" },
         {
@@ -143,38 +145,29 @@ module.exports = function () {
   return router;
 };
 
-const getFindUsageWhereClause = ({ usage_id, owner_id, user_id }) => {
-  let whereClause = { usage_id: usage_id, status: { [Op.ne]: "active" } };
+const isUserAuthorized = async (usageToUpdate, req) => {
+  let result;
 
-  if (user_id) whereClause.user_id = user_id;
-  else if (owner_id) {
-    whereClause = {
-      ...whereClause,
-      [Op.and]: Sequelize.literal(
-        `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsage.item_id) = ${owner_id}`
-      ),
-    };
+  const { user_id } = req.body;
+
+  console.log(user_id === usageToUpdate.user_id);
+
+  if (user_id) {
+    result = user_id === usageToUpdate.user_id;
+  } else {
+    result = isOwner(usageToUpdate, req.body);
   }
-  return whereClause;
+
+  return result;
 };
 
-
-const getUsageToUpdate = async (req) => {
-  return await ItemUsage.findOne({
-    where: getFindUsageWhereClause(req.body),
-    attributes: [
-      "usage_id",
-      "user_id",
-      "item_id",
-      "item_usage_request_id",
-      "status",
-      "created_at",
-    ],
-    include: [
-      {
-        model: Item,
-        attributes: ["owner_id"], // Include the owner_id attribute from the Item model
-      },
-    ],
+const isOwner = async (usageToUpdate, { owner_id }) => {
+  const item = await Item.findOne({
+    where: {
+      item_id: usageToUpdate.item_id,
+      owner_id: owner_id,
+    },
   });
-}
+
+  return item;
+};

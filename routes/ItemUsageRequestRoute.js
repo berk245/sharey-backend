@@ -9,7 +9,7 @@ const ItemUsage = require("../database/models/ItemUsage.model");
 module.exports = function () {
   router.post("/create", async (req, res) => {
     try {
-      const { user_id, item_id, date_from, date_to, request_message } =
+      const { user_id, item_id, date_to_use, request_message } =
         req.body;
 
       //Add Item check to prevent requests to items that do not exist
@@ -20,14 +20,13 @@ module.exports = function () {
       });
       if (!item) {
         res.status(404).send({ error: "Item doesn not exist" });
-        return
+        return;
       }
 
       await ItemUsageRequest.create({
         user_id: user_id,
         item_id: item_id,
-        date_from: date_from,
-        date_to: date_to,
+        date_to_use: date_to_use,
         request_message: request_message,
       });
 
@@ -49,7 +48,7 @@ module.exports = function () {
       res.status(200).send({ matches: requests });
     } catch (err) {
       console.log(err);
-      res.status(500).send({ error: "Error getting requests" });
+      res.status(500).send({ error: err });
       return;
     }
   });
@@ -71,7 +70,7 @@ module.exports = function () {
       res.status(200).send({ matches: allRequests });
     } catch (err) {
       console.log(err);
-      res.status(500).send({ error: "Error getting requests" });
+      res.status(500).send({ error: err });
       return;
     }
   });
@@ -82,7 +81,7 @@ module.exports = function () {
       return;
     } catch (err) {
       console.log(err);
-      res.status(500).send({ error: "Error getting requests" });
+      res.status(500).send({ error: err });
       return;
     }
   });
@@ -144,7 +143,7 @@ module.exports = function () {
           .send({ error: "No matching usage requests or no changes." });
     } catch (err) {
       console.log(err);
-      res.status(500).send({ error: "Error getting requests" });
+      res.status(500).send({ error: err });
     }
   });
 
@@ -154,43 +153,33 @@ module.exports = function () {
 const updateItemUsageRequest = async (req, res) => {
   const { request_id, user_id, owner_response } = req.body;
 
-  const usageToUpdate = await getItemUsageRequest(request_id);
-
-  if (owner_response === "accepted" || owner_response === 2) return await acceptRequest(req, res, usageToUpdate);
-  else if (owner_response === "cancelled" || owner_response === 4) return await cancelRequest(req,res, usageToUpdate);
-  else {
-    let isUpdate = await updateQuery(req);
-    if (isUpdate) {
-      res.status(200).send({ message: "Update successful." });
-      return;
-    } else {
-      res.status(404).send({ error: "Nothing to update." });
-      return
-    }
+  if (owner_response === "cancelled" || owner_response === 4) {
+    res
+      .status(400)
+      .send({
+        error: "Please use dedicated cancel endpoint to cancel a request",
+      });
+    return;
   }
-};
 
-const updateQuery = async (req, transaction) => {
-  const { request_id, user_id, owner_response } = req.body;
+  const usageRequestToUpdate = await getItemUsageRequest(request_id);
 
-  let [updateSuccess] = await ItemUsageRequest.update(
-    {
-      status: owner_response,
-    },
-    {
-      where: {
-        request_id: request_id,
-        // Include a subquery to check if the user_id matches the owner_id of the item in the usage request
-        // to ensure only the owner of an item can accept or decline
-        [Sequelize.Op.and]: Sequelize.literal(
-          `(SELECT owner_id FROM Item WHERE Item.item_id = ItemUsageRequest.item_id) = ${user_id}`
-        ),
-      },
-      transaction: transaction ? transaction : null,
-    }
-  );
+  if (!usageRequestToUpdate) {
+    res.status(404).send({ error: "No matching requests." });
+    return;
+  }
 
-  return updateSuccess;
+  if (!isOwner(usageRequestToUpdate, user_id)) {
+    res.status(403).send({ error: "Unauthorized" });
+    return;
+  }
+
+  //These actions can only be done by the owner of the item
+  if (owner_response === "declined" || owner_response === 3)
+    return await declineRequest(req, res, usageRequestToUpdate);
+  else if (owner_response === "accepted" || owner_response === 2)
+    return await acceptRequest(req, res, usageRequestToUpdate);
+  else res.status(400).send({ error: "Pending status not settable." });
 };
 
 const getItemUsageRequest = async (request_id) => {
@@ -198,8 +187,9 @@ const getItemUsageRequest = async (request_id) => {
   return request;
 };
 
-const acceptRequest = async (req, res, usageToUpdate) => {
+const acceptRequest = async (req, res, usageRequestToUpdate) => {
   const transaction = await db.transaction();
+
   let isRequestUpdated = await updateQuery(req, transaction);
 
   if (!isRequestUpdated) {
@@ -211,9 +201,9 @@ const acceptRequest = async (req, res, usageToUpdate) => {
   //Create a new ItemUsage
   let isItemUsageCreated = await ItemUsage.create(
     {
-      user_id: usageToUpdate.user_id,
-      item_id: usageToUpdate.item_id,
-      item_usage_request_id: usageToUpdate.request_id,
+      user_id: usageRequestToUpdate.user_id,
+      item_id: usageRequestToUpdate.item_id,
+      item_usage_request_id: usageRequestToUpdate.request_id,
     },
     { transaction: transaction }
   );
@@ -229,20 +219,62 @@ const acceptRequest = async (req, res, usageToUpdate) => {
   return;
 };
 
-const cancelRequest = async (req,res, usageToUpdate) => {
-    if (usageToUpdate.status === "accepted") {
-      res.status(400).send({
-        error:
-          "Cannot cancel an accepted request. Please cancel the related item usage entry.",
-      });
-      return
-    }
+const declineRequest = async (req, res, usageRequestToUpdate) => {
+  let isUpdateSuccess = await usageRequestToUpdate.update({
+    status: "declined",
+  });
 
-    let isUpdate = await updateQuery(req);
+  isUpdateSuccess
+    ? res.status(200).send({ message: "Request successfuly declined" })
+    : res.status(500).send({ error: "Could not make the update." });
+  return;
+};
 
-    if (!isUpdate) {
-      await transaction.rollback();
-      res.status(404).send({ error: "Nothing to update." });
-      return;
+const cancelRequest = async (req, res, usageToUpdate) => {
+  if (usageToUpdate.status === "accepted") {
+    res.status(400).send({
+      error:
+        "Cannot cancel an accepted request. Please cancel the related item usage entry.",
+    });
+    return;
+  }
+
+  let isUpdate = await updateQuery(req);
+
+  if (!isUpdate) {
+    await transaction.rollback();
+    res.status(404).send({ error: "Nothing to update." });
+    return;
+  }
+};
+
+const updateQuery = async (req, transaction) => {
+  const { request_id, owner_response } = req.body;
+
+  let [updateSuccess] = await ItemUsageRequest.update(
+    {
+      status: owner_response,
+    },
+    {
+      where: {
+        request_id: request_id,
+      },
+      transaction: transaction ? transaction : null,
     }
-}
+  );
+
+  return updateSuccess;
+};
+
+const isOwner = async (usageRequestToUpdate, user_id) => {
+  //Get the owner
+
+  const item = Item.findOne({
+    where: {
+      item_id: usageRequestToUpdate.item_id,
+      owner_id: user_id,
+    },
+  });
+
+  return item;
+};
