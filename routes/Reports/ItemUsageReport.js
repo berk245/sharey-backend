@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ItemUsage = require("../../database/models/ItemUsage.model");
 const ItemUsageReport = require("../../database/models/ItemUsageReport.model");
+const Item = require("../../database/models/Item.model");
 
 module.exports = function () {
   router.get("/", async (req, res) => {
@@ -23,17 +24,28 @@ module.exports = function () {
     try {
       const { creator_id, item_usage_id, report_text } = req.body;
 
-      const itemUsage = await ItemUsage.findOne({
-        where: {
-          usage_id: item_usage_id,
-          user_id: creator_id,
-        },
-      });
-
+      const itemUsage = await ItemUsage.findByPk(item_usage_id);
       if (!itemUsage) {
         res.status(404).json({
           error: "ItemUsage not found",
         });
+        return;
+      }
+
+      if(itemUsage.status === 'scheduled'){
+        res.status(404).json({
+          error: "Cannot report a scheduled item usage.",
+        });
+        return;
+      }
+
+      //The creator has to be either the owner of the item or the borrower
+      const { item_id, user_id } = itemUsage;
+      const item = await Item.findByPk(item_id);
+      if (!(user_id === creator_id || item?.owner_id === creator_id)) {
+        res
+          .status(403)
+          .send({ error: "You are not authorized to leave this review." });
         return;
       }
 
@@ -61,7 +73,7 @@ module.exports = function () {
         where: req.query,
       });
       if (deleteSuccess)
-        res.status(200).send({ message: "Deleted item review." });
+        res.status(200).send({ message: "Deleted item report." });
       else
         res
           .status(404)

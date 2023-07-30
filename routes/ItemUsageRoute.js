@@ -90,31 +90,13 @@ module.exports = function () {
   router.post("/cancel", async (req, res) => {
     const transaction = await db.transaction();
     try {
-      let usageToUpdate = await ItemUsage.findOne({
-        where: getFindUsageWhereClause(req.body),
-        attributes: [
-          "usage_id",
-          "user_id",
-          "item_id",
-          "item_usage_request_id",
-          "status",
-          "created_at",
-        ],
-        include: [
-          {
-            model: Item,
-            attributes: ["owner_id"], // Include the owner_id attribute from the Item model
-          },
-        ],
-      });
-
+      let usageToUpdate = getUsageToUpdate(req)
       if (!usageToUpdate) {
         res.status(404).send({ error: "Usage was not found" });
         return;
       }
 
       //Transaction begins
-
       //Update the usage
       let updateUsageSuccess = await usageToUpdate.update(
         {
@@ -175,3 +157,24 @@ const getFindUsageWhereClause = ({ usage_id, owner_id, user_id }) => {
   }
   return whereClause;
 };
+
+
+const getUsageToUpdate = async (req) => {
+  return await ItemUsage.findOne({
+    where: getFindUsageWhereClause(req.body),
+    attributes: [
+      "usage_id",
+      "user_id",
+      "item_id",
+      "item_usage_request_id",
+      "status",
+      "created_at",
+    ],
+    include: [
+      {
+        model: Item,
+        attributes: ["owner_id"], // Include the owner_id attribute from the Item model
+      },
+    ],
+  });
+}
