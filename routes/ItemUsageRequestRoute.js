@@ -84,14 +84,54 @@ module.exports = function () {
 
   router.delete("/cancel", async (req, res) => {
     try {
-      let [affectedRows] = await ItemUsageRequest.update(
-        {
-          status: "cancelled",
-        },
-        {
-          where: req.body,
+      const { owner_id, requester_id, request_id, ...params } = req.body;
+
+      const IUR = await ItemUsageRequest.findByPk(request_id);
+
+      if (!IUR) {
+        res.status(404).send({ error: "No matching requests to cancel." });
+        return;
+      }
+
+      let affectedRows;
+
+      if (owner_id) {
+        const reqItem = await Item.findOne({
+          where: {
+            item_id: IUR.item_id,
+            owner_id: owner_id,
+          },
+        });
+        if (!reqItem) {
+          res
+            .status(403)
+            .send({ error: "Not authorized to cancel the request." });
+          return;
         }
-      );
+        [affectedRows] = await ItemUsageRequest.update(
+          {
+            status: "cancelled",
+          },
+          {
+            where: {
+              request_id: request_id,
+            },
+          }
+        );
+      }else if (requester_id) {
+        [affectedRows] = await ItemUsageRequest.update(
+          {
+            status: "cancelled",
+          },
+          {
+            where: {
+              request_id: request_id,
+              user_id: requester_id,
+            },
+          }
+        );
+      }
+
       if (affectedRows) res.status(200).send({ message: "Request cancelled" });
       else
         res

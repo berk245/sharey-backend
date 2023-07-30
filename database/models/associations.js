@@ -15,15 +15,15 @@ const UserReview = require("./UserReview.model");
 const City = require("./City.model");
 const Country = require("./Country.model");
 
-const associations = async() => {
+const associations = async () => {
   City.belongsTo(Country, {
-    foreignKey:{
-      name: 'country_id',
+    foreignKey: {
+      name: "country_id",
       allowNull: false,
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
-    }
-  })
+    },
+  });
   Item.belongsTo(Category, {
     foreignKey: {
       name: "category_id",
@@ -74,14 +74,14 @@ const associations = async() => {
     },
   });
 
-  User.belongsTo(City,{
-    foreignKey:{
-      name: 'city_id',
+  User.belongsTo(City, {
+    foreignKey: {
+      name: "city_id",
       allowNull: false,
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
-    }
-  })
+    },
+  });
 
   //User owns many items
   User.hasMany(Item, {
@@ -100,7 +100,7 @@ const associations = async() => {
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
     },
-    unique: 'Unique_Review'
+    unique: "Unique_Review",
   });
   //every user review is about a user
   UserReview.belongsTo(User, {
@@ -110,7 +110,7 @@ const associations = async() => {
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
     },
-    unique: 'Unique_Review'
+    unique: "Unique_Review",
   });
   //User writes many user reports
   User.hasMany(UserReport, {
@@ -194,11 +194,14 @@ const associations = async() => {
   });
   //Item usage is a result of an item usage request
   ItemUsage.belongsTo(ItemUsageRequest, {
-    name: "item_usage_request_id",
-    allowNull: false,
-    onDelete: "RESTRICT",
-    onUpdate: "RESTRICT",
+    foreignKey: {
+      name: "item_usage_request_id",
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    },
   });
+
   //item usage report is about an item usage
   ItemUsageReport.belongsTo(ItemUsage, {
     foreignKey: {
