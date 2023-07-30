@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const User = require("../database/models/User.model");
 const bcrypt = require("bcrypt");
-const validateLogin = require('../helpers/validateLogin')
+const validateLogin = require("../helpers/validateLogin");
 module.exports = function () {
   router.post("/signup", async (req, res) => {
     try {
@@ -12,12 +12,13 @@ module.exports = function () {
 
       await User.create({
         password: hashedPassword,
-        ...rest
+        ...rest,
       });
 
       res.status(200).json({ signupSuccess: true });
     } catch (err) {
-      res.status(500).send({error: err});
+      res.status(500).send({ error: err });
+      return
     }
   });
 

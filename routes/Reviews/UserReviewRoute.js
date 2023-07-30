@@ -29,6 +29,7 @@ module.exports = function () {
       const { creator_id, reviewed_user_id } = req.query;
       if (!creator_id && !reviewed_user_id) {
         res.status(400).send({ error: "Bad request" });
+        return;
       }
 
       let reviews = await UserReview.findAll({

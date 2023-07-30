@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {Sequelize, Op} = require("sequelize");
+const { Sequelize, Op } = require("sequelize");
 const db = require("../database/config");
 
 const ItemUsageRequest = require("../database/models/ItemUsageRequest.model");
@@ -38,6 +38,7 @@ module.exports = function () {
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: "Error getting requests" });
+      return;
     }
   });
 
@@ -88,10 +89,17 @@ module.exports = function () {
 
   router.post("/cancel", async (req, res) => {
     const transaction = await db.transaction();
-    try{
+    try {
       let usageToUpdate = await ItemUsage.findOne({
         where: getFindUsageWhereClause(req.body),
-        attributes: ["usage_id", "user_id", "item_id", "item_usage_request_id", "status", "created_at"],
+        attributes: [
+          "usage_id",
+          "user_id",
+          "item_id",
+          "item_usage_request_id",
+          "status",
+          "created_at",
+        ],
         include: [
           {
             model: Item,
@@ -99,61 +107,62 @@ module.exports = function () {
           },
         ],
       });
-    
-      if(!usageToUpdate){
-        res.status(404).send({error: 'Usage was not found'});
+
+      if (!usageToUpdate) {
+        res.status(404).send({ error: "Usage was not found" });
+        return;
       }
-    
-    
+
       //Transaction begins
-    
+
       //Update the usage
-      let updateUsageSuccess = await usageToUpdate.update({
-        status: 'cancelled'
-      }, 
-      {transaction: transaction}
-      )
-      
-      if(!updateUsageSuccess){
-        await transaction.rollback();
-          res.status(404).send({ error: "Could not update item usage status" });
-          return;
-      }
-    
-      //Find an update the item usage request
-    
-      const itemUsageRequestCancel = await ItemUsageRequest.update(
-        { status: 'cancelled'},
+      let updateUsageSuccess = await usageToUpdate.update(
         {
-          where:{
+          status: "cancelled",
+        },
+        { transaction: transaction }
+      );
+
+      if (!updateUsageSuccess) {
+        await transaction.rollback();
+        res.status(404).send({ error: "Could not update item usage status" });
+        return;
+      }
+
+      //Find an update the item usage request
+
+      const itemUsageRequestCancel = await ItemUsageRequest.update(
+        { status: "cancelled" },
+        {
+          where: {
             request_id: usageToUpdate.item_usage_request_id,
           },
-          transaction: transaction
+          transaction: transaction,
         }
-      )
-    
-      if(!itemUsageRequestCancel){
+      );
+
+      if (!itemUsageRequestCancel) {
         await transaction.rollback();
-          res.status(404).send({ error: "Could not update item usage request status" });
-          return;
+        res
+          .status(404)
+          .send({ error: "Could not update item usage request status" });
+        return;
       }
-    
-    
-    
+
       await transaction.commit();
-      res.status(200).send({message: 'Usage successfuly cancelled.'});
-  
-    }catch(err){
-      await transaction.rollback()
+      res.status(200).send({ message: "Usage successfuly cancelled." });
+      return;
+    } catch (err) {
+      await transaction.rollback();
       console.log(err);
-      res.status(500).send({error: err})
+      res.status(500).send({ error: err });
     }
   });
   return router;
 };
 
 const getFindUsageWhereClause = ({ usage_id, owner_id, user_id }) => {
-  let whereClause = { usage_id: usage_id, status: {[Op.ne]: 'active'}  };
+  let whereClause = { usage_id: usage_id, status: { [Op.ne]: "active" } };
 
   if (user_id) whereClause.user_id = user_id;
   else if (owner_id) {

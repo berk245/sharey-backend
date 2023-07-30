@@ -76,6 +76,7 @@ module.exports = function () {
       res.status(200).json({ message: `Delete successful.` });
     } catch (err) {
       res.status(500).send({ error: err });
+      return
     }
   });
   return router;

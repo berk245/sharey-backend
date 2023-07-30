@@ -9,6 +9,7 @@ module.exports = function () {
       const { creator_id, reported_item_id } = req.query;
       if (!creator_id && !reported_item_id) {
         res.status(400).send({ error: "Bad request" });
+        return
       }
 
       let reviews = await ItemReport.findAll({

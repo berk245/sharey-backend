@@ -20,6 +20,7 @@ module.exports = function () {
       });
       if (!item) {
         res.status(404).send({ error: "Item doesn not exist" });
+        return
       }
 
       await ItemUsageRequest.create({
@@ -33,6 +34,7 @@ module.exports = function () {
       res.status(200).send({ message: "Item usage request successful" });
     } catch (err) {
       res.status(500).send({ error: "Could bot create the usage request" });
+      return;
     }
   });
 
@@ -48,6 +50,7 @@ module.exports = function () {
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: "Error getting requests" });
+      return;
     }
   });
 
@@ -69,6 +72,7 @@ module.exports = function () {
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: "Error getting requests" });
+      return;
     }
   });
 
@@ -79,6 +83,7 @@ module.exports = function () {
     } catch (err) {
       console.log(err);
       res.status(500).send({ error: "Error getting requests" });
+      return;
     }
   });
 
@@ -118,7 +123,7 @@ module.exports = function () {
             },
           }
         );
-      }else if (requester_id) {
+      } else if (requester_id) {
         [affectedRows] = await ItemUsageRequest.update(
           {
             status: "cancelled",
@@ -151,77 +156,18 @@ const updateItemUsageRequest = async (req, res) => {
 
   const usageToUpdate = await getItemUsageRequest(request_id);
 
-  if (owner_response === "accepted" || owner_response === 2) {
-    const transaction = await db.transaction();
-    let isRequestUpdated = await updateQuery(req, transaction);
-
-    if (!isRequestUpdated) {
-      await transaction.rollback();
-      res.status(404).send({ error: "Nothing to update." });
-      return;
-    }
-
-    //Create a new ItemUsage
-    let isItemUsageCreated = await ItemUsage.create(
-      {
-        user_id: usageToUpdate.user_id,
-        item_id: usageToUpdate.item_id,
-        item_usage_request_id: usageToUpdate.request_id,
-      },
-      { transaction: transaction }
-    );
-
-    if (!isItemUsageCreated) {
-      await transaction.rollback();
-      res.status(404).send({ error: "Item Usage could not be created." });
-      return;
-    }
-
-    await transaction.commit();
-    res.status(200).send({ message: "Update successful." });
-    return;
-  } else if (
-    (owner_response === "cancelled" || owner_response === 4) &&
-    usageToUpdate.status === "accepted"
-  ) {
-    const transaction = await db.transaction();
-    let isUpdate = await updateQuery(req, transaction);
-
-    if (!isUpdate) {
-      await transaction.rollback();
-      res.status(404).send({ error: "Nothing to update." });
-      return;
-    }
-
-    //Cancel the ItemUsage
-    let [cancelItemUsage] = await ItemUsage.update(
-      {
-        status: "cancelled",
-      },
-      {
-        where: {
-          usage_id: usageToUpdate.usage_id,
-        },
-        transaction: transaction,
-      }
-    );
-    if (!cancelItemUsage) {
-      await transaction.rollback();
-      res.status(404).send({ error: "Nothing to update." });
-      return;
-    }
-    await transaction.commit();
-    res.status(200).send({ message: "Update successful." });
-  } else {
+  if (owner_response === "accepted" || owner_response === 2) return await acceptRequest(req, res, usageToUpdate);
+  else if (owner_response === "cancelled" || owner_response === 4) return await cancelRequest(req,res, usageToUpdate);
+  else {
     let isUpdate = await updateQuery(req);
     if (isUpdate) {
       res.status(200).send({ message: "Update successful." });
       return;
     } else {
       res.status(404).send({ error: "Nothing to update." });
+      return
     }
   }
-  return;
 };
 
 const updateQuery = async (req, transaction) => {
@@ -251,3 +197,52 @@ const getItemUsageRequest = async (request_id) => {
   let request = await ItemUsageRequest.findByPk(request_id);
   return request;
 };
+
+const acceptRequest = async (req, res, usageToUpdate) => {
+  const transaction = await db.transaction();
+  let isRequestUpdated = await updateQuery(req, transaction);
+
+  if (!isRequestUpdated) {
+    await transaction.rollback();
+    res.status(404).send({ error: "Nothing to update." });
+    return;
+  }
+
+  //Create a new ItemUsage
+  let isItemUsageCreated = await ItemUsage.create(
+    {
+      user_id: usageToUpdate.user_id,
+      item_id: usageToUpdate.item_id,
+      item_usage_request_id: usageToUpdate.request_id,
+    },
+    { transaction: transaction }
+  );
+
+  if (!isItemUsageCreated) {
+    await transaction.rollback();
+    res.status(404).send({ error: "Item Usage could not be created." });
+    return;
+  }
+
+  await transaction.commit();
+  res.status(200).send({ message: "Update successful." });
+  return;
+};
+
+const cancelRequest = async (req,res, usageToUpdate) => {
+    if (usageToUpdate.status === "accepted") {
+      res.status(400).send({
+        error:
+          "Cannot cancel an accepted request. Please cancel the related item usage entry.",
+      });
+      return
+    }
+
+    let isUpdate = await updateQuery(req);
+
+    if (!isUpdate) {
+      await transaction.rollback();
+      res.status(404).send({ error: "Nothing to update." });
+      return;
+    }
+}
