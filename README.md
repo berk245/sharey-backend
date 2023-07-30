@@ -1,5 +1,3 @@
-# Programmatic Access to the Database
-
 ### Prerequisites
 
 - Node.js version 14 or higher
