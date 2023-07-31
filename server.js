@@ -63,14 +63,14 @@ app.get("/item_reviews", async (req, res) => {
 
 
   // Synchronize the models with the database
-  // db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
-  // .then(() => {
-  //   console.log("Database and tables synced.");
-  //   associations()
-  // })
-  // .catch((err) => console.error("Error syncing database:", err));
+  db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
+  .then(() => {
+    console.log("Database and tables synced.");
+    associations()
+  })
+  .catch((err) => console.error("Error syncing database:", err));
   
-  associations()
+  // associations()
 
 const port = process.env.PORT || 3000;
 

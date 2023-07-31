@@ -190,6 +190,21 @@ const getItemUsageRequest = async (request_id) => {
 const acceptRequest = async (req, res, usageRequestToUpdate) => {
   const transaction = await db.transaction();
 
+  //Check if there are any reservations made for that date
+
+  let reservations = await ItemUsageRequest.findAll({
+    where:{
+      item_id: usageRequestToUpdate.item_id,
+      date_to_use: usageRequestToUpdate.date_to_use,
+      status: 'accepted'
+    }
+  })
+
+  if(reservations.length){
+    res.status(400).send({error: 'Item is reserved'})
+    return
+  }
+
   let isRequestUpdated = await updateQuery(req, transaction);
 
   if (!isRequestUpdated) {

@@ -72,7 +72,7 @@ const associations = async () => {
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
     },
-  })
+  });
 
   Item.belongsTo(User, {
     foreignKey: {
@@ -86,6 +86,15 @@ const associations = async () => {
   User.belongsTo(City, {
     foreignKey: {
       name: "city_id",
+      allowNull: false,
+      onDelete: "RESTRICT",
+      onUpdate: "RESTRICT",
+    },
+  });
+
+  Item.belongsTo(User, {
+    foreignKey: {
+      name: "owner_id",
       allowNull: false,
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",

@@ -76,7 +76,7 @@ module.exports = function () {
       const [affectedRows] = await User.update(
         {
           is_active: false,
-          email: "$deleted_account$:" + userToDelete.email,
+          email: `$deleted_account$:${user_id}` + userToDelete.email,
         },
         {
           where: {
