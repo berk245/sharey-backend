@@ -39,7 +39,6 @@ app.use('/item_usage', ItemUsageRoute())
   //   associations()
   // })
   // .catch((err) => console.error("Error syncing database:", err));
-  
 const port = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== "test") {

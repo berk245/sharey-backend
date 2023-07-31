@@ -73,12 +73,10 @@ module.exports = function () {
       } = req.query;
 
       if (item_id) {
-        res
-          .status(422)
-          .status({
-            error:
-              "Bad request. For id based search, please use get_by_id endpoint",
-          });
+        res.status(422).status({
+          error:
+            "Bad request. For id based search, please use get_by_id endpoint",
+        });
         return;
       }
       const reservedItemIds = await getReservedItemIds(date_to_use);
@@ -95,12 +93,7 @@ module.exports = function () {
           "is_active",
         ],
 
-        where: {
-          ...search_params,
-          item_id: {
-            [Op.notIn]: reservedItemIds, // Exclude items with accepted ItemUsageRequests
-          },
-        },
+        where: getWhereClause(search_params, reservedItemIds),
         include: [
           {
             model: User,
@@ -178,4 +171,23 @@ const getReservedItemIds = async (date_to_use) => {
   });
 
   return itemsWithAcceptedRequests.map((item) => item.item_id);
+};
+
+const getWhereClause = (searchParams, reservedItemIds) => {
+  let result = {
+    item_id: {
+      [Op.notIn]: reservedItemIds, // Exclude items with accepted ItemUsageRequests
+    },
+  };
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    if (key === "item_name" || key === "item_description") {
+      result[key] = {
+        [Op.like]: `%${value}%`
+      };
+    } else {
+      result[key] = value;
+    }
+  });
+  return result;
 };

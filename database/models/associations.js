@@ -104,7 +104,7 @@ const associations = async () => {
   //User owns many items
   User.hasMany(Item, {
     foreignKey: {
-      name: "owner_id",
+      name: "user_id",
       allowNull: false,
       onDelete: "RESTRICT",
       onUpdate: "RESTRICT",
