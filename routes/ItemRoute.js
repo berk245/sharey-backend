@@ -12,8 +12,8 @@ const Country = require("../database/models/Country.model");
 module.exports = function () {
   router.get("/get_by_id", async (req, res) => {
     try {
-      const item = await Item.findByPk(req.query.item_id)
-      res.status(200).send({item: item});
+      const item = await Item.findByPk(req.query.item_id);
+      res.status(200).send({ item: item });
     } catch (err) {
       console.log(err);
       res.status(500).send("Server error");
@@ -62,18 +62,27 @@ module.exports = function () {
     }
   });
 
-  
-
   router.get("/available_items", async (req, res) => {
     try {
-      const { date_to_use, city_name, country_name, item_id, ...search_params } = req.query;
+      const {
+        date_to_use,
+        city_name,
+        country_name,
+        item_id,
+        ...search_params
+      } = req.query;
 
-      if(item_id){
-        res.status(422).status({error: 'Bad request. For id based search, please use get_by_id endpoint'})
-        return
+      if (item_id) {
+        res
+          .status(422)
+          .status({
+            error:
+              "Bad request. For id based search, please use get_by_id endpoint",
+          });
+        return;
       }
-      const reservedItemIds = await getReservedItemIds(date_to_use)
-      
+      const reservedItemIds = await getReservedItemIds(date_to_use);
+
       const availableItems = await Item.findAll({
         attributes: [
           "item_id",
@@ -85,7 +94,7 @@ module.exports = function () {
           "updated_at",
           "is_active",
         ],
-        
+
         where: {
           ...search_params,
           item_id: {
@@ -110,7 +119,9 @@ module.exports = function () {
                     model: Country,
                     attributes: ["country_name", "country_id"],
                     where: {
-                      country_name: country_name ? country_name : { [Op.ne]: null },
+                      country_name: country_name
+                        ? country_name
+                        : { [Op.ne]: null },
                     },
                   },
                 ],
@@ -154,11 +165,9 @@ module.exports = function () {
   return router;
 };
 
+const getReservedItemIds = async (date_to_use) => {
+  if (!date_to_use) return [];
 
-const getReservedItemIds = async(date_to_use) => {
-  
-  if(!date_to_use) return []
-  
   const itemsWithAcceptedRequests = await ItemUsageRequest.findAll({
     attributes: ["item_id"],
     where: {
@@ -167,8 +176,6 @@ const getReservedItemIds = async(date_to_use) => {
     },
     raw: true,
   });
-  
-  return itemsWithAcceptedRequests.map(
-    (item) => item.item_id
-  );
-}
+
+  return itemsWithAcceptedRequests.map((item) => item.item_id);
+};

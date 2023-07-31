@@ -32,46 +32,14 @@ app.use('/item_usage_report', ItemUsageReport())
 app.use('/item_photo', ItemPhotoRoute())
 app.use('/item_usage', ItemUsageRoute())
 
-
-app.get("/item_reports", async (req, res) => {
-  const ItemReport = require('./database/models/ItemReport.model')
-  xw
-  const {item_id} = req.query
-  const reports = await ItemReport.findAll({
-      where:{
-          reported_item_id: item_id
-      }
-  })
-
-  res.status(200).json({ reports: reports });
-
-});
-
-app.get("/item_reviews", async (req, res) => {
-  const ItemReview = require('./database/models/ItemReview.model')
-  
-  const {item_id} = req.query
-  const reviews = await ItemReview.findAll({
-      where:{
-          reviewed_item_id: item_id
-      }
-  })
-
-  res.status(200).json({ reviews: reviews });
-
-});
-
-
   // Synchronize the models with the database
-  db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
-  .then(() => {
-    console.log("Database and tables synced.");
-    associations()
-  })
-  .catch((err) => console.error("Error syncing database:", err));
+  // db.sync({ alter: true, drop: false }) // Set force to true only for testing to recreate tables
+  // .then(() => {
+  //   console.log("Database and tables synced.");
+  //   associations()
+  // })
+  // .catch((err) => console.error("Error syncing database:", err));
   
-  // associations()
-
 const port = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== "test") {
